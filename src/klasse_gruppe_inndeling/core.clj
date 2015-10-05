@@ -18,9 +18,13 @@
 (defn parse-long [s]
   (Long/parseLong (re-find #"\A-?\d+" s)))
 
+;; (defn get-weight-adjustment
+;;   [n]
+;;   (/ 1 (/ (+ (math/expt 0.85 n) (math/expt 1.15 n)) 2)))
+
 (defn get-weight-adjustment
   [n]
-  (/ 1 (/ (+ (math/expt 0.85 n) (math/expt 1.15 n)) 2)))
+  (+ 0.5 (/ (/ 1 n) 2)))
 
 (defn make-weights
   [n]
@@ -117,7 +121,7 @@
   (->> (range 1 (inc num-students))
     (reduce #(assoc % %2 (make-empty-map-for-student %2 num-students)) {})))
 
-;;FIXME: Uncomment this later
+;;FIXME: comment this later
 (def dummy-weights (make-empty-maps-for-all-students 15))
 
 (defn increase-value-in-row
@@ -126,7 +130,7 @@
 
 (defn increase-with-adjustement
   [old-val adjustment]
-  (* adjustment (inc old-val)))
+  (+ old-val adjustment))
 
 (defn analyze-pair
   [pair weights adjustment]
@@ -167,6 +171,11 @@
    (cond (empty? day) weights
          (= (count (first day)) 3) (analyze-day adjustment (rest day) (analyze-triplet (first day) weights adjustment))
          :else (analyze-day adjustment (rest day) (analyze-pair (first day) weights adjustment)))))
+
+(def test-data (generate-data 100 15))
+;; (->> (generate-data 100 15)
+;;   (reduce #(analyze-day %2 %) dummy-weights)
+;;   )
 
 ;; (generate-data 10 15)
 ;; ((0 (5 13 11) (1 9) (10 15) (14 8) (12 6) (3 2) (4 7))
