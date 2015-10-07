@@ -173,6 +173,52 @@
          :else (analyze-day adjustment (rest day) (analyze-pair (first day) weights adjustment)))))
 
 (def test-data (generate-data 100 15))
+(def analyzed-data (->> test-data
+                     (reduce #(analyze-day %2 %) dummy-weights)))
+(defn draw-triples
+  [analyzed-data present-students]
+  (let [presents (set present-students)]
+    (->> analyzed-data
+      (sort-by :triples)
+      (filter #(contains? presents (first %)))
+      (take 3)
+      (map first)
+      )))
+
+(defn- get-mininum-student
+  [remaining-students data-for-student]
+  (do ;;(print remaining-students data-for-student)
+    (first (reduce #(if (< (get data-for-student %2) (second %))
+                      (list %2 (get data-for-student %2))
+                      %) (list -1 (* 2 (apply max (vals data-for-student)))) remaining-students))))
+
+(defn draw-pair
+  [even-remaining-students analyzed-data]
+  (let [student (first even-remaining-students)
+        data-for-student (get analyzed-data student)]
+    (list student (get-mininum-student (rest even-remaining-students) data-for-student)))
+  )
+
+(defn draw-pairs
+  ([even-remaining-students analyzed-data] (draw-pairs even-remaining-students analyzed-data '()))
+  ([even-remaining-students analyzed-data acc]
+   (if (empty? even-remaining-students) acc
+       (let [next-pair (draw-pair even-remaining-students analyzed-data)
+             remaining (remove #(contains? (set next-pair) %) even-remaining-students)]
+         (draw-pairs remaining analyzed-data (cons next-pair acc)))))
+)
+
+(defn make-draw
+  [present-students analyzed-data]
+  (if (< (count present-students) 4)
+    (cons present-students '())
+    (if (odd? (count present-students))
+      (let [triplet (draw-triples analyzed-data present-students)
+            remaining (remove #(contains? (set triplet) %) present-students)]
+        (cons triplet (draw-pairs remaining analyzed-data)))
+      (draw-pairs present-students analyzed-data)
+      )))
+
 ;; (->> (generate-data 100 15)
 ;;   (reduce #(analyze-day %2 %) dummy-weights)
 ;;   )
